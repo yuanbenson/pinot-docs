@@ -327,6 +327,12 @@ pushJobSpec:
 ...
 ```
 
+### Consistent Data Push
+
+Pinot supports atomic update on segment level, which means that when data consisting of multiple segments are pushed to a table, as segments are replaced one at a time, queries to the broker during this upload phase may produce inconsistent result due to interleaving of old and new data.
+
+See [Consistent Push and Rollback](https://docs.pinot.apache.org/operators/operating-pinot/consistent-push.md) for how to enable this feature.
+
 ### Segment Fetchers
 
 When pinot segment files are created in external systems (Hadoop/spark/etc), there are several ways to push those data to the Pinot Controller and Server:
