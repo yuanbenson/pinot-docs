@@ -53,7 +53,9 @@ Instead, consistent push is built into batch ingestion jobs (currently only supp
 
 ### How to set up Ingestion Job with Consistent Push
 
-**Step 0**: Set up config for your OFFLINE, REFRESH table. Enable `consistentDataPush` under IngestionConfig -> BatchIngestionConfig.
+**Step 0**: Adjust the table [storage quota](https://docs.pinot.apache.org/configuration-reference/table#quota) to 2x that of the original amount. See #Implications-of-turning-on-consistent-push for more details.
+
+**Step 1**: Set up config for your OFFLINE, REFRESH table. Enable `consistentDataPush` under IngestionConfig -> BatchIngestionConfig.
 
 ```
 "tableName": "myTable_OFFLINE",
@@ -69,13 +71,15 @@ Instead, consistent push is built into batch ingestion jobs (currently only supp
 }
 ```
 
-**Step 1**: Execute the job as usual by following https://docs.pinot.apache.org/users/tutorials/batch-data-ingestion-in-practice#executing-the-job
+**Step 2**: Execute the job as usual by following [instruction](https://docs.pinot.apache.org/users/tutorials/batch-data-ingestion-in-practice#executing-the-job) for batch data job execution.
 
 ### How to trigger Data Rollback
 
-**Step 0**: Identify the segment lineage entry ID corresponding to the segment swap that would like to be rolled back. This could be identified by heading to the Zookeeper browser and inspecting under the path: `<cluster_name>/PROPERTYSTORE/SEGMENT_LINEAGE/<table_name>`.
+**Step 0**: Identify the segment lineage entry ID corresponding to the segment swap that would like to be rolled back by using the `/lineage` REST API to list segment lineage.
 
-**Step 1**: Head to Swagger REST API to utilize the `revertReplaceSegments` API to rollback data.
+**Step 1**: Use the `revertReplaceSegments` REST API to rollback data.
+
+**Step 2**: As a sanity check, use the `/lineage` REST API again to ensure that the corresponding lineage entry is in "REVERTED" state.
 
 ### Cleanup
 Retention manager manages the cleanup of segments as well as segment lineage data.
@@ -86,6 +90,10 @@ For entries in "REVERTED" or "IN_PROGRESS" state whose timestamp is more than 24
 2. Once all segments in step 1 are cleaned up, we remove the lineage entry.
 
 * The cleanup is usually handled in 2 cycles.
+
+Cleanup regarding `startReplaceSegment` API:
+1. We proactively remove the first snapshot if the client side is pushing the 3rd snapshot, so we are not exceeding the 2x disk space.
+2. If the previous push fails in the middle (IN_PROGRESS/REVERTED state), we also clean up the `segmentsTo`.
 
 ### Implications of turning on consistent push
 1. Enabling consistent push can lead to up to 2x storage usage (assuming data size between snapshots are roughly equivalent) since at any time, we are potentially keeping both replacing and replaced segments. 
