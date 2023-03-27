@@ -76,7 +76,7 @@ It might become desirable to force the non-committer servers to download the seg
 
 This feature is available only if the consumption type is `LowLevel`.
 
-Once a committer is asked to commit the segment, it builds a segment, and issues an HTTP POST to the controller, with the segment. The controller than commits the segment in Zookeeper and starts the next consuming segment.
+Once a committer is asked to commit the segment, it builds a segment, and issues an HTTP POST to the controller, with the segment. The controller then commits the segment in Zookeeper and starts the next consuming segment.
 
 It is possible to conifigure the servers to do a _split_ commit, in which the committer performs the following steps:
 
